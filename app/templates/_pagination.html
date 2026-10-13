@@ -1,0 +1,144 @@
+<!-- app/templates/_pagination.html -->
+{% if pagination and pagination.pages > 1 %}
+
+{# Crear una copia de los argumentos sin el parámetro page #}
+{% set query_params = {} %}
+{% for key, value in request.args.items() %}
+    {% if key != 'page' %}
+        {% set _ = query_params.update({key: value}) %}
+    {% endif %}
+{% endfor %}
+
+<nav aria-label="Navegación de páginas" class="mt-4">
+    <ul class="pagination justify-content-center flex-wrap gap-1">
+        <!-- Botón Anterior -->
+        {% if pagination.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.prev_num, **query_params) }}">
+                <i class="fas fa-chevron-left me-1"></i> Anterior
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">
+                <i class="fas fa-chevron-left me-1"></i> Anterior
+            </span>
+        </li>
+        {% endif %}
+
+        <!-- Números de página -->
+        {% for page_num in pagination.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == pagination.page %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                </li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for(request.endpoint, page=page_num, **query_params) }}">
+                        {{ page_num }}
+                    </a>
+                </li>
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">…</span>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Botón Siguiente -->
+        {% if pagination.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.next_num, **query_params) }}">
+                Siguiente <i class="fas fa-chevron-right ms-1"></i>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">
+                Siguiente <i class="fas fa-chevron-right ms-1"></i>
+            </span>
+        </li>
+        {% endif %}
+    </ul>
+    
+    <!-- Información de la página -->
+    <div class="text-center text-muted mt-3 small">
+        <i class="fas fa-info-circle me-1"></i>
+        Mostrando <strong>{{ pagination.first }}</strong> - <strong>{{ pagination.last }}</strong> 
+        de <strong>{{ pagination.total }}</strong> registros
+        {% if pagination.pages > 1 %}
+        | Página <strong>{{ pagination.page }}</strong> de <strong>{{ pagination.pages }}</strong>
+        {% endif %}
+    </div>
+</nav>
+
+<style>
+.pagination {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0;
+}
+
+.pagination .page-item {
+    margin: 0;
+    list-style: none;
+}
+
+.pagination .page-link {
+    border-radius: 8px !important;
+    border: 1px solid #e0d6c8;
+    padding: 0.5rem 1rem;
+    color: #8B4513;
+    background-color: white;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    min-width: 3rem;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.pagination .page-link:hover {
+    background-color: #FFF8F0;
+    border-color: #D2691E;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 69, 19, 0.15);
+    color: #8B4513;
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #8B4513, #D2691E);
+    border-color: #8B4513;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #adb5bd;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.pagination .page-link i {
+    font-size: 0.875rem;
+}
+
+@media (max-width: 576px) {
+    .pagination .page-link {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        min-width: 2.5rem;
+    }
+    
+    .pagination {
+        gap: 0.25rem;
+    }
+}
+</style>
+{% endif %}

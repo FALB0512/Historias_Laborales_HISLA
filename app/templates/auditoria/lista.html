@@ -1,0 +1,345 @@
+<!-- app/templates/auditoria/lista.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-history text-primary me-2"></i>
+                Registro de Auditoría
+            </h2>
+            <p class="text-muted small mb-0">
+                <i class="fas fa-clock me-1"></i>
+                Última actualización: {{ registros.items[0].fecha.strftime('%d/%m/%Y %H:%M') if registros.items else 'Sin registros' }}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <span class="badge bg-primary p-2">
+                <i class="fas fa-database me-1"></i>
+                {{ registros.total }} registros
+            </span>
+            <button class="btn btn-outline-primary btn-sm" onclick="window.location.reload()">
+                <i class="fas fa-sync-alt me-1"></i> Actualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtros mejorados -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form class="row g-3" method="GET">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-user me-1"></i>Usuario
+                    </label>
+                    <select name="usuario" class="form-select">
+                        <option value="">Todos los usuarios</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if request.args.get('usuario')|int == user.id %}selected{% endif %}>
+                            {{ user.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-tag me-1"></i>Acción
+                    </label>
+                    <select name="accion" class="form-select">
+                        <option value="">Todas las acciones</option>
+                        <option value="CREAR" {% if request.args.get('accion') == 'CREAR' %}selected{% endif %}>Creación</option>
+                        <option value="EDITAR" {% if request.args.get('accion') == 'EDITAR' %}selected{% endif %}>Edición</option>
+                        <option value="ELIMINAR" {% if request.args.get('accion') == 'ELIMINAR' %}selected{% endif %}>Eliminación</option>
+                        <option value="ARCHIVAR" {% if request.args.get('accion') == 'ARCHIVAR' %}selected{% endif %}>Archivado</option>
+                        <option value="BISQUEDA" {% if request.args.get('accion') == 'BISQUEDA' %}selected{% endif %}>Búsqueda</option>
+                        <option value="LOGIN" {% if request.args.get('accion') == 'LOGIN' %}selected{% endif %}>Inicio Sesión</option>
+                        <option value="CAMBIO PASSWORD" {% if request.args.get('accion') == 'CAMBIO PASSWORD' %}selected{% endif %}>Cambio Password</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-cube me-1"></i>Módulo
+                    </label>
+                    <select name="modulo" class="form-select">
+                        <option value="">Todos los módulos</option>
+                        <option value="HISTORIAS" {% if request.args.get('modulo') == 'HISTORIAS' %}selected{% endif %}>Historias</option>
+                        <option value="CENTROS" {% if request.args.get('modulo') == 'CENTROS' %}selected{% endif %}>Centros</option>
+                        <option value="USUARIOS" {% if request.args.get('modulo') == 'USUARIOS' %}selected{% endif %}>Usuarios</option>
+                        <option value="SEGURIDAD" {% if request.args.get('modulo') == 'SEGURIDAD' %}selected{% endif %}>Seguridad</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-calendar me-1"></i>Fecha
+                    </label>
+                    <input type="date" name="fecha" class="form-control" value="{{ request.args.get('fecha', '') }}">
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i> Filtrar
+                    </button>
+                    <a href="{{ url_for('auditoria.listar') }}" class="btn btn-secondary">
+                        <i class="fas fa-undo me-1"></i> Limpiar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de auditoría profesional -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 12%;" class="py-3">
+                                <i class="fas fa-clock me-1"></i>Fecha
+                            </th>
+                            <th style="width: 12%;" class="py-3">
+                                <i class="fas fa-user me-1"></i>Usuario
+                            </th>
+                            <th style="width: 15%;" class="py-3">
+                                <i class="fas fa-tag me-1"></i>Acción
+                            </th>
+                            <th style="width: 12%;" class="py-3">
+                                <i class="fas fa-cube me-1"></i>Módulo
+                            </th>
+                            <th style="width: 30%;" class="py-3">
+                                <i class="fas fa-info-circle me-1"></i>Detalle
+                            </th>
+                            <th style="width: 10%;" class="py-3 text-center">
+                                <i class="fas fa-network-wired me-1"></i>IP
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for registro in registros.items %}
+                        <tr>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-semibold">{{ registro.fecha.strftime('%d/%m/%Y') }}</span>
+                                    <small class="text-muted">{{ registro.fecha.strftime('%H:%M:%S') }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle me-2" style="width: 32px; height: 32px; background: linear-gradient(135deg, #8B4513, #D2691E); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px;">
+                                        {{ registro.usuario.username[0].upper() if registro.usuario else 'S' }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">{{ registro.usuario.username if registro.usuario else 'Sistema' }}</div>
+                                        <small class="text-muted">{{ registro.usuario.role if registro.usuario else '' }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if registro.accion == 'CREAR' %}
+                                <span class="badge bg-success" style="padding: 0.5rem 1rem; border-radius: 20px;">
+                                    <i class="fas fa-plus-circle me-1"></i>Creación
+                                </span>
+                                {% elif registro.accion == 'EDITAR' %}
+                                <span class="badge bg-primary" style="padding: 0.5rem 1rem; border-radius: 20px;">
+                                    <i class="fas fa-edit me-1"></i>Edición
+                                </span>
+                                {% elif registro.accion == 'ELIMINAR' %}
+                                <span class="badge bg-danger" style="padding: 0.5rem 1rem; border-radius: 20px;">
+                                    <i class="fas fa-trash-alt me-1"></i>Eliminación
+                                </span>
+                                {% elif registro.accion == 'ARCHIVAR' %}
+                                <span class="badge bg-warning text-dark" style="padding: 0.5rem 1rem; border-radius: 20px;">
+                                    <i class="fas fa-archive me-1"></i>Archivado
+                                </span>
+                                {% elif registro.accion == 'BISQUEDA' %}
+                                <span class="badge bg-info text-dark" style="padding: 0.5rem 1rem; border-radius: 20px;">
+                                    <i class="fas fa-search me-1"></i>Búsqueda
+                                </span>
+                                {% elif registro.accion == 'LOGIN' %}
+                                <span class="badge bg-success" style="padding: 0.5rem 1rem; border-radius: 20px;">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                                </span>
+                                {% elif registro.accion == 'CAMBIO PASSWORD' %}
+                                <span class="badge bg-secondary" style="padding: 0.5rem 1rem; border-radius: 20px;">
+                                    <i class="fas fa-key me-1"></i>Cambio Password
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary" style="padding: 0.5rem 1rem; border-radius: 20px;">
+                                    {{ registro.accion }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border" style="padding: 0.4rem 0.8rem;">
+                                    {% if registro.modulo == 'HISTORIAS' %}
+                                    <i class="fas fa-folder-open me-1"></i>
+                                    {% elif registro.modulo == 'CENTROS' %}
+                                    <i class="fas fa-building me-1"></i>
+                                    {% elif registro.modulo == 'USUARIOS' %}
+                                    <i class="fas fa-users me-1"></i>
+                                    {% elif registro.modulo == 'SEGURIDAD' %}
+                                    <i class="fas fa-shield-alt me-1"></i>
+                                    {% else %}
+                                    <i class="fas fa-cube me-1"></i>
+                                    {% endif %}
+                                    {{ registro.modulo }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="text-truncate" style="max-width: 200px;" title="{{ registro.detalle }}">
+                                        {{ registro.detalle or 'N/A' }}
+                                    </span>
+                                    {% if registro.detalle and registro.detalle|length > 30 %}
+                                    <button class="btn btn-link btn-sm p-0 ms-1" onclick="verDetalle('{{ registro.detalle }}')">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <code class="badge bg-light text-dark border" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">
+                                    {{ registro.ip or 'N/A' }}
+                                </code>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <i class="fas fa-inbox fa-3x d-block mb-3 text-muted"></i>
+                                <h5 class="text-muted">No hay registros de auditoría</h5>
+                                <small class="text-muted">Los registros aparecerán cuando los usuarios realicen acciones en el sistema</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Paginación profesional -->
+        <div class="card-footer bg-white border-top-0 py-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div class="text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Mostrando <strong>{{ registros.first }}</strong> - <strong>{{ registros.last }}</strong> 
+                    de <strong>{{ registros.total }}</strong> registros
+                </div>
+                <div>
+                    {% with pagination=registros %}
+                        {% include '_pagination.html' %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver detalles -->
+<div class="modal fade" id="detalleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>Detalle del registro
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="p-3 bg-light rounded">
+                    <pre id="detalleContenido" style="white-space: pre-wrap; margin: 0; font-family: inherit;"></pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function verDetalle(detalle) {
+    document.getElementById('detalleContenido').textContent = detalle;
+    new bootstrap.Modal(document.getElementById('detalleModal')).show();
+}
+</script>
+
+<style>
+.table thead th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table tbody td {
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid #f0ebe5;
+}
+
+.table tbody tr:hover {
+    background-color: #FFF8F0 !important;
+    cursor: default;
+}
+
+.badge {
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+.avatar-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+}
+
+.card.shadow-sm {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+.table-light {
+    background-color: #f8f9fa;
+}
+
+.text-truncate {
+    display: inline-block;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+    
+    .table tbody td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.6rem !important;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ 'Editar' if historia else 'Nueva' }} historia laboral</h2>
+<p class="text-muted">Registro de control de la carpeta física. No se cargan documentos digitales.</p>
+<form method="post" class="card">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="card-body row g-3">
+  <div class="col-md-3"><label class="form-label">Tipo documento</label><select class="form-select" name="tipo_documento_id" required>{% for x in tipos %}<option value="{{ x.id }}" {% if historia and historia.tipo_documento_id == x.id %}selected{% endif %}>{{ x.codigo }} - {{ x.nombre }}</option>{% endfor %}</select></div>
+  <div class="col-md-3"><label class="form-label">Número documento</label><input class="form-control" name="numero_documento" value="{{ historia.numero_documento if historia else '' }}" required></div>
+  <div class="col-md-6"><label class="form-label">Nombre completo</label><input class="form-control" name="nombre_completo" value="{{ historia.nombre_completo if historia else '' }}" required></div>
+  <div class="col-md-4"><label class="form-label">Unidad de conservación</label><select class="form-select" name="unidad_conservacion_id" required>{% for x in unidades %}<option value="{{ x.id }}" {% if historia and historia.unidad_conservacion_id == x.id %}selected{% endif %}>{{ x.nombre }}</option>{% endfor %}</select></div>
+  <div class="col-md-4"><label class="form-label">Centro de trabajo</label><select class="form-select" name="centro_id" {% if historia %}disabled{% endif %} required>{% for x in centros %}<option value="{{ x.id }}" {% if historia and historia.centro_id == x.id %}selected{% endif %}>{{ x.nombre }}</option>{% endfor %}</select>{% if historia %}<input type="hidden" name="centro_id" value="{{ historia.centro_id }}">{% endif %}</div>
+  <div class="col-md-4"><label class="form-label">Consecutivo de carpeta</label><input class="form-control" type="number" name="consecutivo_carpeta" value="{{ historia.consecutivo_carpeta if historia else (pre_consecutivo or '') }}" {% if historia %}readonly{% endif %} required></div>
+  <div class="col-md-4"><label class="form-label">Fecha de ingreso</label><input class="form-control" type="date" name="fecha_ingreso" value="{{ historia.fecha_ingreso.isoformat() if historia else '' }}" required></div>
+  {% if historia %}<div class="col-md-4"><label class="form-label">Estado laboral</label><select class="form-select" name="estado"><option value="activo" {% if historia.estado == 'activo' %}selected{% endif %}>Activo</option><option value="retirado" {% if historia.estado == 'retirado' %}selected{% endif %}>Retirado</option></select></div>{% endif %}
+  <div class="col-12 d-flex gap-2"><button class="btn btn-primary">Guardar</button><a class="btn btn-light" href="{{ url_for('historias.listar') }}">Cancelar</a></div>
+</div></form>
+{% endblock %}

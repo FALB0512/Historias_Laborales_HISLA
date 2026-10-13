@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Centros de trabajo</h2>
+
+    <a
+        class="btn btn-primary"
+        href="{{ url_for('centros.nuevo') }}"
+    >
+        Nuevo centro
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+
+        <div class="table-responsive">
+            <table class="table align-middle">
+
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Estado</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for c in centros.items %}
+
+                    <tr>
+                        <td>{{ c.codigo }}</td>
+
+                        <td>{{ c.nombre }}</td>
+
+                        <td>
+                            {% if c.activo %}
+                                <span class="badge text-bg-success">
+                                    Activo
+                                </span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">
+                                    Inactivo
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-center text-nowrap">
+
+                            <div
+                                class="d-inline-flex align-items-center"
+                                style="gap: 12px;"
+                            >
+
+                                <a
+                                    class="btn btn-sm btn-outline-primary"
+                                    href="{{ url_for('centros.editar', id=c.id) }}"
+                                >
+                                    Editar
+                                </a>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#eliminarCentro{{ c.id }}"
+                                >
+                                    Eliminar
+                                </button>
+
+                            </div>
+
+                            <div
+                                class="modal fade"
+                                id="eliminarCentro{{ c.id }}"
+                                tabindex="-1"
+                                aria-labelledby="tituloEliminarCentro{{ c.id }}"
+                                aria-hidden="true"
+                            >
+
+                                <div class="modal-dialog modal-dialog-centered">
+
+                                    <div class="modal-content">
+
+                                        <div class="modal-header">
+
+                                            <h5
+                                                class="modal-title"
+                                                id="tituloEliminarCentro{{ c.id }}"
+                                            >
+                                                Eliminar centro de trabajo
+                                            </h5>
+
+                                            <button
+                                                type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal"
+                                                aria-label="Cerrar"
+                                            ></button>
+
+                                        </div>
+
+                                        <div class="modal-body text-start">
+
+                                            ¿Confirma que desea eliminar el centro
+                                            <strong>{{ c.nombre }}</strong>?
+
+                                        </div>
+
+                                        <div class="modal-footer">
+
+                                            <button
+                                                type="button"
+                                                class="btn btn-light"
+                                                data-bs-dismiss="modal"
+                                            >
+                                                Cancelar
+                                            </button>
+
+                                            <form
+                                                method="post"
+                                                action="{{ url_for('centros.eliminar', id=c.id) }}"
+                                                class="m-0"
+                                            >
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-danger"
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            </form>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+                        <td colspan="4" class="text-center py-4">
+                            No hay centros de trabajo registrados.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+        </div>
+
+        {% with pagination=centros %}
+            {% include '_pagination.html' %}
+        {% endwith %}
+
+    </div>
+</div>
+
+{% endblock %}
