@@ -512,3 +512,5 @@ body.modal-open { overflow: hidden; }
 .bg-danger { background: var(--danger); color: #fff; }
 
 .active { font-weight: 600; }
+
+.modal-dialog.modal-lg { max-width: 800px; }

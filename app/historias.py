@@ -23,13 +23,13 @@ def listar():
         consulta=consulta.filter(or_(Persona.numero_documento.ilike(f"%{q}%"), Persona.nombre_completo.ilike(f"%{q}%")))
         registrar_auditoria("BUSQUEDA","HISTORIAS",f"Persona: {q[:100]}")
     personas=consulta.order_by(Persona.nombre_completo).paginate(page=page,per_page=25,error_out=False)
-    return render_template("historias/lista.html", personas=personas)
+    return render_template("historias/lista.html", personas=personas, tipos=TipoDocumento.query.filter_by(activo=True).all())
 
 @historias_bp.route("/<int:id>")
 @login_required
 def ver(id):
     persona=Persona.query.get_or_404(id)
-    return render_template("historias/detalle.html", persona=persona)
+    return render_template("historias/detalle.html", persona=persona, centros=CentroTrabajo.query.filter_by(activo=True).all(), unidades=UnidadConservacion.query.filter_by(activo=True).all())
 
 @historias_bp.route("/nueva", methods=["GET","POST"])
 @login_required

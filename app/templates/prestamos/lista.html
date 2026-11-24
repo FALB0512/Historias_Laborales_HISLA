@@ -1,1 +1,38 @@
-{% extends 'base.html' %}{% block content %}<div class="d-flex justify-content-between align-items-center mb-3"><div><h2>Préstamos</h2><small class="text-muted">El préstamo se realiza sobre una carpeta física específica.</small></div><a class="btn btn-primary" href="{{url_for('prestamos.nuevo')}}">Nuevo préstamo</a></div><form class="row g-2 mb-3" method="get"><div class="col-md-8"><input class="form-control" name="q" value="{{request.args.get('q','')}}" placeholder="Persona, documento, solicitante o área"></div><div class="col-md-2"><select class="form-select" name="estado"><option value="">Todos</option><option value="prestado">Prestados</option><option value="devuelto">Devueltos</option><option value="vencidos">Vencidos</option></select></div><div class="col-md-2"><button class="btn btn-dark w-100">Buscar</button></div></form><div class="card"><div class="card-body"><table class="table table-hover align-middle"><thead><tr><th>Carpeta</th><th>Persona</th><th>Solicitante</th><th>Área</th><th>Prevista</th><th>Estado</th><th></th></tr></thead><tbody>{% for p in prestamos.items %}<tr><td><strong>{{p.carpeta.consecutivo_carpeta}}</strong></td><td>{{p.carpeta.persona.nombre_completo}}<br><small>{{p.carpeta.persona.numero_documento}}</small></td><td>{{p.solicitante}}</td><td>{{p.area_solicitante}}</td><td>{{p.fecha_devolucion_prevista.isoformat()}}</td><td><span class="badge text-bg-{{'danger' if p.vencido else ('warning' if p.estado=='prestado' else 'success')}}">{{'Vencido' if p.vencido else p.estado}}</span></td><td>{% if p.estado=='prestado' %}<a class="btn btn-sm btn-outline-success" href="{{url_for('prestamos.devolver',id=p.id)}}">Devolver</a>{% endif %}</td></tr>{% else %}<tr><td colspan="7" class="text-center">Sin préstamos.</td></tr>{% endfor %}</tbody></table>{% with pagination=prestamos %}{% include '_pagination.html' %}{% endwith %}</div></div>{% endblock %}
+{% extends 'base.html' %}
+{% from '_modal.html' import modal %}{% block content %}<div class="d-flex justify-content-between align-items-center mb-3"><div><h2>Préstamos</h2><small class="text-muted">El préstamo se realiza sobre una carpeta física específica.</small></div><button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoPrestamo">Nuevo préstamo</button></div><form class="row g-2 mb-3" method="get"><div class="col-md-8"><input class="form-control" name="q" value="{{request.args.get('q','')}}" placeholder="Persona, documento, solicitante o área"></div><div class="col-md-2"><select class="form-select" name="estado"><option value="">Todos</option><option value="prestado">Prestados</option><option value="devuelto">Devueltos</option><option value="vencidos">Vencidos</option></select></div><div class="col-md-2"><button class="btn btn-dark w-100">Buscar</button></div></form><div class="card"><div class="card-body"><table class="table table-hover align-middle"><thead><tr><th>Carpeta</th><th>Persona</th><th>Solicitante</th><th>Área</th><th>Prevista</th><th>Estado</th><th></th></tr></thead><tbody>{% for p in prestamos.items %}<tr><td><strong>{{p.carpeta.consecutivo_carpeta}}</strong></td><td>{{p.carpeta.persona.nombre_completo}}<br><small>{{p.carpeta.persona.numero_documento}}</small></td><td>{{p.solicitante}}</td><td>{{p.area_solicitante}}</td><td>{{p.fecha_devolucion_prevista.isoformat()}}</td><td><span class="badge text-bg-{{'danger' if p.vencido else ('warning' if p.estado=='prestado' else 'success')}}">{{'Vencido' if p.vencido else p.estado}}</span></td><td>{% if p.estado=='prestado' %}<a class="btn btn-sm btn-outline-success" href="{{url_for('prestamos.devolver',id=p.id)}}">Devolver</a>{% endif %}</td></tr>{% else %}<tr><td colspan="7" class="text-center">Sin préstamos.</td></tr>{% endfor %}</tbody></table>{% with pagination=prestamos %}{% include '_pagination.html' %}{% endwith %}</div></div>{% call modal('modalNuevoPrestamo', 'Nuevo préstamo') %}
+<form method="post" action="{{ url_for('prestamos.nuevo') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" id="carpeta_id" name="carpeta_id" required>
+<div class="modal-body"><div class="row g-3">
+<div class="col-12"><label class="form-label" for="buscarCarpeta">Carpeta física</label><input class="form-control" id="buscarCarpeta" placeholder="Busque por nombre, documento o número de carpeta" autocomplete="off"><div id="resultadosCarpeta" class="list-group mt-1"></div></div>
+<div class="col-md-6"><label class="form-label" for="pl_sol">Solicitante</label><input id="pl_sol" class="form-control" name="solicitante" required></div>
+<div class="col-md-6"><label class="form-label" for="pl_area">Área</label><input id="pl_area" class="form-control" name="area_solicitante" required></div>
+<div class="col-md-4"><label class="form-label" for="pl_fecha">Devolución prevista</label><input id="pl_fecha" class="form-control" type="date" name="fecha_devolucion_prevista" required></div>
+<div class="col-md-8"><label class="form-label" for="pl_motivo">Motivo</label><input id="pl_motivo" class="form-control" name="motivo" required></div>
+<div class="col-12"><label class="form-label" for="pl_obs">Observaciones</label><textarea id="pl_obs" class="form-control" name="observaciones_salida"></textarea></div>
+</div></div>
+<div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary">Registrar préstamo</button></div>
+</form>
+{% endcall %}
+<script>
+(function () {
+    const q = document.getElementById('buscarCarpeta'), box = document.getElementById('resultadosCarpeta'), hid = document.getElementById('carpeta_id');
+    let tm;
+    q.addEventListener('input', function () {
+        clearTimeout(tm);
+        tm = setTimeout(async function () {
+            const v = q.value.trim();
+            if (v.length < 2) { box.innerHTML = ''; return; }
+            const r = await fetch('{{ url_for("prestamos.buscar_carpetas") }}?q=' + encodeURIComponent(v));
+            const d = await r.json();
+            box.innerHTML = d.map(x => `<button type="button" class="list-group-item list-group-item-action" data-id="${x.id}"><strong>Carpeta ${x.consecutivo}</strong> · ${x.nombre} · ${x.documento}</button>`).join('');
+            box.querySelectorAll('button').forEach(b => b.onclick = () => { hid.value = b.dataset.id; q.value = b.textContent.trim(); box.innerHTML = ''; });
+        }, 250);
+    });
+    document.getElementById('modalNuevoPrestamo').addEventListener('show.bs.modal', function () {
+        const d = new Date(); d.setDate(d.getDate() + 5);
+        document.getElementById('pl_fecha').value = new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    });
+})();
+</script>
+{% endblock %}

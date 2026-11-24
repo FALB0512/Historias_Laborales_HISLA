@@ -15,7 +15,8 @@ def proteger_auditor(u):
 def listar():
     page=request.args.get('page',1,type=int)
     usuarios=Usuario.query.order_by(Usuario.nombre).paginate(page=page,per_page=10,error_out=False)
-    return render_template('usuarios/lista.html',usuarios=usuarios)
+    roles=['admin','asistente'] if current_user.rol=='admin' else ['admin','asistente','auditor']
+    return render_template('usuarios/lista.html',usuarios=usuarios,roles=roles)
 
 @usuarios_bp.route("/nuevo", methods=["GET", "POST"])
 @login_required

@@ -1,6 +1,18 @@
-{% extends 'base.html' %}{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3"><div><h2 class="mb-1">Historias laborales</h2><small class="text-muted">Una persona puede tener una o varias carpetas físicas.</small></div><a class="btn btn-primary" href="{{url_for('historias.nueva')}}">Nueva persona</a></div>
+{% extends 'base.html' %}
+{% from '_modal.html' import modal %}{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3"><div><h2 class="mb-1">Historias laborales</h2><small class="text-muted">Una persona puede tener una o varias carpetas físicas.</small></div><button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaPersona">Nueva persona</button></div>
 <form class="row g-2 mb-3" method="get"><div class="col-md-10"><input class="form-control" name="q" value="{{request.args.get('q','')}}" placeholder="Buscar por identificación o nombre"></div><div class="col-md-2"><button class="btn btn-dark w-100">Buscar</button></div></form>
 <div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Documento</th><th>Nombre</th><th class="text-center">Carpetas</th><th>Consecutivos</th><th class="text-center">Acciones</th></tr></thead><tbody>
 {% for p in personas.items %}<tr><td>{{p.tipo_documento.codigo}} {{p.numero_documento}}</td><td><strong>{{p.nombre_completo}}</strong>{% if p.tiene_multiples_carpetas %}<span class="badge text-bg-info ms-2">Múltiples carpetas</span>{% endif %}</td><td class="text-center"><span class="badge text-bg-dark">{{p.cantidad_carpetas}}</span></td><td>{% for c in p.carpetas[:4] %}<span class="badge text-bg-light border text-dark me-1">{{c.consecutivo_carpeta}}</span>{% endfor %}{% if p.cantidad_carpetas>4 %}…{% endif %}</td><td class="text-center"><a class="btn btn-sm btn-outline-primary" href="{{url_for('historias.ver',id=p.id)}}">Ver carpetas</a> <a class="btn btn-sm btn-outline-secondary" href="{{url_for('historias.editar',id=p.id)}}">Editar persona</a></td></tr>{% else %}<tr><td colspan="5" class="text-center py-4">No hay personas.</td></tr>{% endfor %}</tbody></table></div>{% with pagination=personas %}{% include '_pagination.html' %}{% endwith %}</div></div>
+{% call modal('modalNuevaPersona', 'Nueva persona') %}
+<form method="post" action="{{ url_for('historias.nueva') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="modal-body"><div class="row g-3">
+<div class="col-md-3"><label class="form-label" for="np_tipo">Tipo de documento</label><select id="np_tipo" class="form-select" name="tipo_documento_id" required>{% for x in tipos %}<option value="{{x.id}}">{{x.codigo}} - {{x.nombre}}</option>{% endfor %}</select></div>
+<div class="col-md-3"><label class="form-label" for="np_doc">Identificación</label><input id="np_doc" class="form-control" name="numero_documento" minlength="4" required></div>
+<div class="col-md-6"><label class="form-label" for="np_nom">Nombre completo</label><input id="np_nom" class="form-control" name="nombre_completo" minlength="5" required></div>
+</div></div>
+<div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary">Guardar persona</button></div>
+</form>
+{% endcall %}
 {% endblock %}

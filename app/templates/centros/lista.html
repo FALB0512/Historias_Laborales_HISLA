@@ -1,16 +1,14 @@
 {% extends 'base.html' %}
+{% from '_modal.html' import modal %}
 
 {% block content %}
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Centros de trabajo</h2>
 
-    <a
-        class="btn btn-primary"
-        href="{{ url_for('centros.nuevo') }}"
-    >
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoCentro">
         Nuevo centro
-    </a>
+    </button>
 </div>
 
 <div class="card">
@@ -169,4 +167,14 @@
     </div>
 </div>
 
+{% call modal('modalNuevoCentro', 'Nuevo centro de trabajo') %}
+<form method="post" action="{{ url_for('centros.nuevo') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="modal-body"><div class="row g-3">
+<div class="col-md-4"><label class="form-label" for="nce_cod">Código</label><input id="nce_cod" class="form-control" name="codigo" maxlength="20" required></div>
+<div class="col-md-8"><label class="form-label" for="nce_nom">Nombre</label><input id="nce_nom" class="form-control" name="nombre" required></div>
+</div></div>
+<div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary">Guardar centro</button></div>
+</form>
+{% endcall %}
 {% endblock %}

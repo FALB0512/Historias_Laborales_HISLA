@@ -1,5 +1,43 @@
-{% extends 'base.html' %}{% block content %}
-<div class="d-flex justify-content-between align-items-start mb-3"><div><a class="text-decoration-none" href="{{url_for('historias.listar')}}">← Volver</a><h2 class="mt-2 mb-0">{{persona.nombre_completo}}</h2><div class="text-muted">{{persona.tipo_documento.codigo}} {{persona.numero_documento}} · {{persona.cantidad_carpetas}} carpeta(s)</div></div><div><a class="btn btn-outline-secondary" href="{{url_for('historias.editar',id=persona.id)}}">Editar persona</a> <a class="btn btn-primary" href="{{url_for('historias.nueva_carpeta',persona_id=persona.id)}}">Agregar carpeta</a></div></div>
+{% extends 'base.html' %}
+{% from '_modal.html' import modal %}{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3"><div><a class="text-decoration-none" href="{{url_for('historias.listar')}}">← Volver</a><h2 class="mt-2 mb-0">{{persona.nombre_completo}}</h2><div class="text-muted">{{persona.tipo_documento.codigo}} {{persona.numero_documento}} · {{persona.cantidad_carpetas}} carpeta(s)</div></div><div><a class="btn btn-outline-secondary" href="{{url_for('historias.editar',id=persona.id)}}">Editar persona</a> <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaCarpeta">Agregar carpeta</button></div></div>
 <div class="card"><div class="card-header fw-semibold">Carpetas físicas asociadas</div><div class="card-body"><div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Consecutivo</th><th>Centro</th><th>Fecha ingreso</th><th>Unidad</th><th>Estado</th><th>Disponibilidad</th><th>Origen</th><th class="text-center">Acciones</th></tr></thead><tbody>
-{% for c in persona.carpetas %}<tr><td><strong>{{c.consecutivo_carpeta}}</strong></td><td>{{c.centro.nombre}}</td><td>{{c.fecha_ingreso.isoformat()}}</td><td>{{c.unidad_conservacion.nombre}}</td><td><span class="badge text-bg-{{'success' if c.estado=='activo' else 'secondary'}}">{{c.estado}}</span>{% if c.archivada %} <span class="badge text-bg-dark">Archivada</span>{% endif %}</td><td><span class="badge text-bg-{{'warning' if c.prestamo_activo else 'success'}}">{{c.disponibilidad_fisica}}</span></td><td>{% if c.source_id %}Excel ID {{c.source_id}}{% else %}<span class="text-muted">Sin ID origen</span>{% endif %}{% if c.fecha_ingreso_origen %}<br><small class="text-danger">Fecha original: {{c.fecha_ingreso_origen}}</small>{% endif %}</td><td class="text-center text-nowrap">{% if not c.archivada and c.estado=='activo' and not c.prestamo_activo %}<a class="btn btn-sm btn-outline-success" href="{{url_for('prestamos.nuevo',carpeta_id=c.id)}}">Prestar</a>{% endif %}{% if c.prestamo_activo %}<a class="btn btn-sm btn-outline-warning" href="{{url_for('prestamos.devolver',id=c.prestamo_activo.id)}}">Devolver</a>{% endif %} <a class="btn btn-sm btn-outline-primary" href="{{url_for('historias.editar_carpeta',id=c.id)}}">Editar</a>{% if current_user.rol in ['admin','auditor'] and not c.archivada %}<form method="post" action="{{url_for('historias.archivar',id=c.id)}}" class="d-inline"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><button class="btn btn-sm btn-outline-dark" onclick="return confirm('¿Archivar esta carpeta?')">Archivar</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table></div></div></div>
+{% for c in persona.carpetas %}<tr><td><strong>{{c.consecutivo_carpeta}}</strong></td><td>{{c.centro.nombre}}</td><td>{{c.fecha_ingreso.isoformat()}}</td><td>{{c.unidad_conservacion.nombre}}</td><td><span class="badge text-bg-{{'success' if c.estado=='activo' else 'secondary'}}">{{c.estado}}</span>{% if c.archivada %} <span class="badge text-bg-dark">Archivada</span>{% endif %}</td><td><span class="badge text-bg-{{'warning' if c.prestamo_activo else 'success'}}">{{c.disponibilidad_fisica}}</span></td><td>{% if c.source_id %}Excel ID {{c.source_id}}{% else %}<span class="text-muted">Sin ID origen</span>{% endif %}{% if c.fecha_ingreso_origen %}<br><small class="text-danger">Fecha original: {{c.fecha_ingreso_origen}}</small>{% endif %}</td><td class="text-center text-nowrap">{% if not c.archivada and c.estado=='activo' and not c.prestamo_activo %}<button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalPrestamo" data-carpeta-id="{{c.id}}" data-carpeta-txt="Carpeta {{c.consecutivo_carpeta}} · {{persona.nombre_completo}}">Prestar</button>{% endif %}{% if c.prestamo_activo %}<a class="btn btn-sm btn-outline-warning" href="{{url_for('prestamos.devolver',id=c.prestamo_activo.id)}}">Devolver</a>{% endif %} <a class="btn btn-sm btn-outline-primary" href="{{url_for('historias.editar_carpeta',id=c.id)}}">Editar</a>{% if current_user.rol in ['admin','auditor'] and not c.archivada %}<form method="post" action="{{url_for('historias.archivar',id=c.id)}}" class="d-inline"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><button class="btn btn-sm btn-outline-dark" onclick="return confirm('¿Archivar esta carpeta?')">Archivar</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table></div></div></div>
+{% call modal('modalNuevaCarpeta', 'Nueva carpeta física') %}
+<form method="post" action="{{ url_for('historias.nueva_carpeta', persona_id=persona.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="modal-body"><div class="row g-3">
+<div class="col-md-3"><label class="form-label" for="nc_cons">Consecutivo</label><input id="nc_cons" class="form-control" type="number" min="1" name="consecutivo_carpeta" required></div>
+<div class="col-md-3"><label class="form-label" for="nc_fecha">Fecha de ingreso</label><input id="nc_fecha" class="form-control" type="date" name="fecha_ingreso" required></div>
+<div class="col-md-3"><label class="form-label" for="nc_centro">Centro</label><select id="nc_centro" class="form-select" name="centro_id" required>{% for x in centros %}<option value="{{x.id}}">{{x.nombre}}</option>{% endfor %}</select></div>
+<div class="col-md-3"><label class="form-label" for="nc_unidad">Unidad</label><select id="nc_unidad" class="form-select" name="unidad_conservacion_id" required>{% for x in unidades %}<option value="{{x.id}}">{{x.nombre}}</option>{% endfor %}</select></div>
+<div class="col-md-3"><label class="form-label" for="nc_estado">Estado</label><select id="nc_estado" class="form-select" name="estado"><option value="activo">Activo</option><option value="retirado">Retirado</option></select></div>
+</div></div>
+<div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary">Guardar carpeta</button></div>
+</form>
+{% endcall %}
+{% call modal('modalPrestamo', 'Registrar préstamo') %}
+<form method="post" action="{{ url_for('prestamos.nuevo') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="carpeta_id" required>
+<div class="modal-body"><div class="row g-3">
+<div class="col-12"><div class="form-label">Carpeta física</div><div class="fw-semibold" id="mp_txt"></div></div>
+<div class="col-md-6"><label class="form-label" for="mp_sol">Solicitante</label><input id="mp_sol" class="form-control" name="solicitante" required></div>
+<div class="col-md-6"><label class="form-label" for="mp_area">Área</label><input id="mp_area" class="form-control" name="area_solicitante" required></div>
+<div class="col-md-4"><label class="form-label" for="mp_fecha">Devolución prevista</label><input id="mp_fecha" class="form-control" type="date" name="fecha_devolucion_prevista" required></div>
+<div class="col-md-8"><label class="form-label" for="mp_motivo">Motivo</label><input id="mp_motivo" class="form-control" name="motivo" required></div>
+<div class="col-12"><label class="form-label" for="mp_obs">Observaciones</label><textarea id="mp_obs" class="form-control" name="observaciones_salida"></textarea></div>
+</div></div>
+<div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary">Registrar préstamo</button></div>
+</form>
+{% endcall %}
+<script>
+document.getElementById('modalPrestamo').addEventListener('show.bs.modal', function (e) {
+    const b = e.relatedTarget, m = this;
+    const d = new Date(); d.setDate(d.getDate() + 5);
+    m.querySelector('[name=carpeta_id]').value = b.dataset.carpetaId;
+    m.querySelector('#mp_txt').textContent = b.dataset.carpetaTxt;
+    m.querySelector('#mp_fecha').value = new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+});
+</script>
 {% endblock %}
