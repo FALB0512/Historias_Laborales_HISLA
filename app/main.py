@@ -10,7 +10,7 @@ main_bp = Blueprint("main", __name__)
 def dashboard():
     total_personas = Persona.query.count()
     total_carpetas = CarpetaFisica.query.count()
-    personas_multiples = db_count = (Persona.query.join(CarpetaFisica).group_by(Persona.id).having(func.count(CarpetaFisica.id) > 1).count())
+    personas_multiples = (Persona.query.join(CarpetaFisica).group_by(Persona.id).having(func.count(CarpetaFisica.id) > 1).count())
     activas = CarpetaFisica.query.filter_by(estado="activo", archivada=False).count()
     retiradas = CarpetaFisica.query.filter_by(estado="retirado", archivada=False).count()
     prestamos_activos = Prestamo.query.filter_by(estado="prestado").count()

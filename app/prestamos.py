@@ -23,11 +23,15 @@ def listar():
 def nuevo():
     carpeta_id=request.args.get("carpeta_id",type=int)
     if request.method=="POST":
-        c=CarpetaFisica.query.get_or_404(int(request.form["carpeta_id"]))
+        c=CarpetaFisica.query.get_or_404(request.form.get("carpeta_id",type=int) or 0)
+        try: fecha_prevista=datetime.strptime(request.form.get("fecha_devolucion_prevista",""),"%Y-%m-%d").date()
+        except ValueError: fecha_prevista=None
         if c.archivada or c.estado!="activo" or c.prestamo_activo:
             flash("La carpeta no está disponible para préstamo.","danger")
+        elif not fecha_prevista:
+            flash("La fecha prevista de devolución no es válida.","danger")
         else:
-            p=Prestamo(carpeta_id=c.id,solicitante=request.form["solicitante"].strip().upper(),area_solicitante=request.form["area_solicitante"].strip().upper(),motivo=request.form["motivo"].strip(),fecha_devolucion_prevista=datetime.strptime(request.form["fecha_devolucion_prevista"],"%Y-%m-%d").date(),observaciones_salida=request.form.get("observaciones_salida","").strip(),entregado_por_id=current_user.id,estado="prestado")
+            p=Prestamo(carpeta_id=c.id,solicitante=request.form["solicitante"].strip().upper(),area_solicitante=request.form["area_solicitante"].strip().upper(),motivo=request.form["motivo"].strip(),fecha_devolucion_prevista=fecha_prevista,observaciones_salida=request.form.get("observaciones_salida","").strip(),entregado_por_id=current_user.id,estado="prestado")
             db.session.add(p); db.session.commit(); registrar_auditoria("PRESTAR","PRESTAMOS",f"Carpeta {c.consecutivo_carpeta} - {c.persona.numero_documento}")
             flash("Préstamo registrado.","success"); return redirect(url_for("prestamos.listar"))
     return render_template("prestamos/form.html",carpeta_id=carpeta_id,fecha_sugerida=(date.today()+timedelta(days=5)).isoformat())

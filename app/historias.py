@@ -90,9 +90,11 @@ def editar_carpeta(id):
     c=CarpetaFisica.query.get_or_404(id); unidades=UnidadConservacion.query.filter_by(activo=True).all(); centros=CentroTrabajo.query.filter_by(activo=True).all()
     if request.method=="POST":
         fecha=_parse_date(request.form.get("fecha_ingreso",""));
+        centro_id=request.form.get("centro_id",type=int); unidad_id=request.form.get("unidad_conservacion_id",type=int)
         if not fecha or fecha>date.today(): flash("Fecha de ingreso inválida o futura.","danger")
+        elif not centro_id or not unidad_id: flash("Seleccione centro y unidad de conservación.","danger")
         else:
-            c.fecha_ingreso=fecha; c.centro_id=request.form.get("centro_id",type=int); c.unidad_conservacion_id=request.form.get("unidad_conservacion_id",type=int); c.estado=request.form.get("estado","activo")
+            c.fecha_ingreso=fecha; c.centro_id=centro_id; c.unidad_conservacion_id=unidad_id; c.estado=request.form.get("estado","activo")
             db.session.commit(); registrar_auditoria("EDITAR","CARPETAS",f"Carpeta {c.consecutivo_carpeta}")
             flash("Carpeta actualizada.","success"); return redirect(url_for("historias.ver",id=c.persona_id))
     return render_template("historias/carpeta_form.html", persona=c.persona, carpeta=c, unidades=unidades, centros=centros)
