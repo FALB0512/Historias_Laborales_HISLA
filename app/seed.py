@@ -1,8 +1,8 @@
 from app import create_app, db
 from app.models import Usuario, TipoDocumento, UnidadConservacion
 
-app = create_app()
-with app.app_context():
+
+def sembrar_datos():
     if not Usuario.query.filter_by(username="auditor").first():
         u = Usuario(nombre="Auditor Inicial", username="auditor",
                     email="auditor@local.test", rol="auditor",
@@ -22,3 +22,9 @@ with app.app_context():
 
     db.session.commit()
     print("Datos iniciales creados. Usuario: auditor / Clave: Temporal123")
+
+
+if __name__ == "__main__":
+    app = create_app()
+    with app.app_context():
+        sembrar_datos()

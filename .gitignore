@@ -5,3 +5,6 @@ instance/
 __pycache__/
 *.pyc
 .env
+build/
+dist/
+*.spec
